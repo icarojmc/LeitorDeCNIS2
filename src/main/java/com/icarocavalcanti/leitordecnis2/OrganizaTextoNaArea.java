@@ -56,9 +56,9 @@ public class OrganizaTextoNaArea {
         PDPage pagina = documento.getPage(numeroDaPagina);
 
         buscarInformacoesPessoais(stripper, pagina);
-        buscarVinculos(stripper, pagina);
 
-        buscarRemuneracoes(documento);
+        buscarVinculos(stripper, documento);
+//        buscarRemuneracoes(documento);
 
     }
 
@@ -67,51 +67,46 @@ public class OrganizaTextoNaArea {
         int index = 0;
         //NIT
         palavra = "NIT:";
-        largura = 100;
         stripper.addRegion("NIT", new Rectangle(
                 50,
                 121,
-                largura,
+                100,
                 altura
         ));
 
         //CPF
         palavra = "CPF:";
-        largura = 100;
         stripper.addRegion("CPF", new Rectangle(
                 258,
                 121,
-                largura,
+                100,
                 altura
         ));
 
         //Nome
         palavra = "Nome:";
-        largura = 200;
         stripper.addRegion("Nome", new Rectangle(
                 388,
                 121,
-                largura,
+                200,
                 altura
         ));
 
         //Data de nascimento
         palavra = "Data de nascimento:";
-        largura = 100;
         stripper.addRegion("Data de nascimento", new Rectangle(
                 116,
                 136,
-                largura,
+                100,
                 altura
         ));
 
         //Nome da mãe
         palavra = "Nome da mãe:";
-        largura = 200;
         stripper.addRegion("Nome da mae", new Rectangle(
                 388,
                 136,
-                largura,
+                200,
                 altura
         ));
 
@@ -128,91 +123,126 @@ public class OrganizaTextoNaArea {
 
     }
 
-    public void buscarVinculos(PDFTextStripperByArea stripper, PDPage pagina) throws IOException {
+    public void buscarVinculos(PDFTextStripperByArea stripper, PDDocument documento) throws IOException {
 
-        int linha = 204;
+        PDPage pagina = documento.getPage(numeroDaPagina);
+        PDFTextStripper tStripper = new PDFTextStripper();
+        tStripper.setSortByPosition(true);
 
-        //Seq.
-        palavra = "Seq";
-        largura = 10;
-        stripper.addRegion("Seq", new Rectangle(
-                42,
-                linha,
-                largura,
-                altura
-        ));
+        String textoEmLinhas[] = tStripper.getText(documento).split("\r\n");
 
-        //NIT
-        palavra = "NIT";
-        largura = 70;
-        stripper.addRegion("NIT", new Rectangle(
-                64,
-                linha,
-                largura,
-                altura
-        ));
 
-        //Código Emp.
-        palavra = "Código Emp.";
-        largura = 70;
-        stripper.addRegion("Codigo_Emp", new Rectangle(
-                142,
-                linha,
-                largura,
-                altura
-        ));
+        //localizar linha da Seq.
+        int i = 1;
+        String seq = "";
+        while (letras.indexOf("Remunerações", i) >= 0) {
 
-        //Origem do Vínculo
-        palavra = "Origem do Vínculo";
-        largura = 200;
-        stripper.addRegion("Origem_do_Vinculo", new Rectangle(
-                226,
-                linha,
-                largura,
-                altura
-        ));
+            int indexDaRemuneracao = letras.indexOf("Remunerações", i) + 111;
+            
+            int linha = eixoY.get(letras.indexOf("Seq", i) + 95).intValue();
+            int linhaRem = eixoY.get(indexDaRemuneracao).intValue();
+            
+            int inicioDasRemuneracoes = linhaRem;
+            int fimDasRemuneracoes = 5;
+            if(letras.indexOf("Seq", indexDaRemuneracao)>0){
+                fimDasRemuneracoes = eixoY.get(letras.indexOf("Seq", indexDaRemuneracao)).intValue();
+            } else{
+                fimDasRemuneracoes = eixoY.get(letras.indexOf("O INSS", indexDaRemuneracao)).intValue();
+            }
+            
+            
+            int campoDasRemuneracoes = fimDasRemuneracoes - inicioDasRemuneracoes;
 
-        //Data de início
-        palavra = "Data Início";
-        largura = 50;
-        stripper.addRegion("Data_Inicio", new Rectangle(
-                435,
-                linha,
-                largura,
-                altura
-        ));
 
-        //Data fim
-        palavra = "Data Fim";
-        largura = 50;
-        stripper.addRegion("Data_Fim", new Rectangle(
-                495,
-                linha,
-                largura,
-                altura
-        ));
+            //Seq.
+            stripper.addRegion("Seq", new Rectangle(
+                    42,
+                    linha,
+                    10,
+                    altura
+            ));
 
-        //Tipo Filiado no Vínculo
-        palavra = "Tipo Filiado no Vínculo";
-        largura = 100;
-        stripper.addRegion("Tipo_Filiado_no_Vinculo", new Rectangle(
-                566,
-                linha,
-                largura,
-                altura
-        ));
+            //NIT
+            stripper.addRegion("NIT", new Rectangle(
+                    64,
+                    linha,
+                    70,
+                    altura
+            ));
 
-        //Ainda precisa ser colocado o NIT (descobrir como pular o do cabeçalho), a última remuneração e o indicador (ausentes no CNIS de estudo).
-        stripper.extractRegions(pagina);
+            //Código Emp.
+            stripper.addRegion("Codigo_Emp", new Rectangle(
+                    142,
+                    linha,
+                    70,
+                    altura
+            ));
 
-        System.out.println("VINCULO: \n" + "Seq: " + stripper.getTextForRegion("Seq")
-                + "NIT: " + stripper.getTextForRegion("NIT")
-                + "Código Emp.: " + stripper.getTextForRegion("Codigo_Emp")
-                + "Origem do Vínculo: " + stripper.getTextForRegion("Origem_do_Vinculo")
-                + "Data Início: " + stripper.getTextForRegion("Data_Inicio")
-                + "Data Fim: " + stripper.getTextForRegion("Data_Fim")
-                + "Tipo Filiado no Vínculo: " + stripper.getTextForRegion("Tipo_Filiado_no_Vinculo")
-                + "-----------------------------------------------------------------------------\n");
+            //Origem do Vínculo
+            stripper.addRegion("Origem_do_Vinculo", new Rectangle(
+                    226,
+                    linha,
+                    200,
+                    altura
+            ));
+
+            //Data de início
+            largura = 50;
+            stripper.addRegion("Data_Inicio", new Rectangle(
+                    435,
+                    linha,
+                    largura,
+                    altura
+            ));
+
+            //Data fim
+            stripper.addRegion("Data_Fim", new Rectangle(
+                    495,
+                    linha,
+                    50,
+                    altura
+            ));
+
+            //Tipo Filiado no Vínculo
+            largura = 100;
+            stripper.addRegion("Tipo_Filiado_no_Vinculo", new Rectangle(
+                    566,
+                    linha,
+                    100,
+                    altura
+            ));
+
+            //Remunecarao
+                    
+            stripper.addRegion("Remu", new Rectangle(
+                    42,
+                    linhaRem,
+                    800,
+                    campoDasRemuneracoes
+            ));
+
+            //Ainda precisa ser colocado o NIT (descobrir como pular o do cabeçalho), a última remuneração e o indicador (ausentes no CNIS de estudo).
+            stripper.extractRegions(pagina);
+
+            if (!seq.equals(stripper.getTextForRegion("Seq"))) {
+                System.out.println("VINCULO: \n" + "Seq: " + stripper.getTextForRegion("Seq")
+                        + "NIT: " + stripper.getTextForRegion("NIT")
+                        + "Código Emp.: " + stripper.getTextForRegion("Codigo_Emp")
+                        + "Origem do Vínculo: " + stripper.getTextForRegion("Origem_do_Vinculo")
+                        + "Data Início: " + stripper.getTextForRegion("Data_Inicio")
+                        + "Data Fim: " + stripper.getTextForRegion("Data_Fim")
+                        + "Tipo Filiado no Vínculo: " + stripper.getTextForRegion("Tipo_Filiado_no_Vinculo")
+                        + "-----------------------------------------------------------------------------\n"
+                        + "----| Remunerações: \n" 
+                        + stripper.getTextForRegion("Remu")
+                );
+            }
+
+            i += letras.indexOf("Remunerações");
+            seq = stripper.getTextForRegion("Seq");
+
+        }
+
     }
 
     public void buscarRemuneracoes(PDDocument documento) throws IOException {
