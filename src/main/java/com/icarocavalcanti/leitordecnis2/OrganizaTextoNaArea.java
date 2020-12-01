@@ -8,6 +8,7 @@ package com.icarocavalcanti.leitordecnis2;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -131,28 +132,24 @@ public class OrganizaTextoNaArea {
 
         String textoEmLinhas[] = tStripper.getText(documento).split("\r\n");
 
-
         //localizar linha da Seq.
         int i = 1;
-        String seq = "";
         while (letras.indexOf("Remunerações", i) >= 0) {
 
             int indexDaRemuneracao = letras.indexOf("Remunerações", i) + 111;
-            
+
             int linha = eixoY.get(letras.indexOf("Seq", i) + 95).intValue();
             int linhaRem = eixoY.get(indexDaRemuneracao).intValue();
-            
+
             int inicioDasRemuneracoes = linhaRem;
-            int fimDasRemuneracoes = 5;
-            if(letras.indexOf("Seq", indexDaRemuneracao)>0){
+            int fimDasRemuneracoes;
+            if (letras.indexOf("Seq", indexDaRemuneracao) > 0) {
                 fimDasRemuneracoes = eixoY.get(letras.indexOf("Seq", indexDaRemuneracao)).intValue();
-            } else{
+            } else {
                 fimDasRemuneracoes = eixoY.get(letras.indexOf("O INSS", indexDaRemuneracao)).intValue();
             }
-            
-            
-            int campoDasRemuneracoes = fimDasRemuneracoes - inicioDasRemuneracoes;
 
+            int campoDasRemuneracoes = fimDasRemuneracoes - inicioDasRemuneracoes;
 
             //Seq.
             stripper.addRegion("Seq", new Rectangle(
@@ -204,7 +201,6 @@ public class OrganizaTextoNaArea {
             ));
 
             //Tipo Filiado no Vínculo
-            largura = 100;
             stripper.addRegion("Tipo_Filiado_no_Vinculo", new Rectangle(
                     566,
                     linha,
@@ -213,8 +209,7 @@ public class OrganizaTextoNaArea {
             ));
 
             //Remunecarao
-                    
-            stripper.addRegion("Remu", new Rectangle(
+            stripper.addRegion("Remuneracao", new Rectangle(
                     42,
                     linhaRem,
                     800,
@@ -224,56 +219,96 @@ public class OrganizaTextoNaArea {
             //Ainda precisa ser colocado o NIT (descobrir como pular o do cabeçalho), a última remuneração e o indicador (ausentes no CNIS de estudo).
             stripper.extractRegions(pagina);
 
-            if (!seq.equals(stripper.getTextForRegion("Seq"))) {
-                System.out.println("VINCULO: \n" + "Seq: " + stripper.getTextForRegion("Seq")
-                        + "NIT: " + stripper.getTextForRegion("NIT")
-                        + "Código Emp.: " + stripper.getTextForRegion("Codigo_Emp")
-                        + "Origem do Vínculo: " + stripper.getTextForRegion("Origem_do_Vinculo")
-                        + "Data Início: " + stripper.getTextForRegion("Data_Inicio")
-                        + "Data Fim: " + stripper.getTextForRegion("Data_Fim")
-                        + "Tipo Filiado no Vínculo: " + stripper.getTextForRegion("Tipo_Filiado_no_Vinculo")
-                        + "-----------------------------------------------------------------------------\n"
-                        + "----| Remunerações: \n" 
-                        + stripper.getTextForRegion("Remu")
-                );
-            }
+            System.out.println("VINCULO: \n" + "Seq: " + stripper.getTextForRegion("Seq")
+                    + "NIT: " + stripper.getTextForRegion("NIT")
+                    + "Código Emp.: " + stripper.getTextForRegion("Codigo_Emp")
+                    + "Origem do Vínculo: " + stripper.getTextForRegion("Origem_do_Vinculo")
+                    + "Data Início: " + stripper.getTextForRegion("Data_Inicio")
+                    + "Data Fim: " + stripper.getTextForRegion("Data_Fim")
+                    + "Tipo Filiado no Vínculo: " + stripper.getTextForRegion("Tipo_Filiado_no_Vinculo")
+                    + "-----------------------------------------------------------------------------\n"
+                    + "----| Remunerações:"
+            //                        + stripper.getTextForRegion("Remuneracao")
+            );
+
+            organizarRemuneracoes(stripper.getTextForRegion("Remuneracao"));
 
             i += letras.indexOf("Remunerações");
-            seq = stripper.getTextForRegion("Seq");
 
         }
 
     }
 
-    public void buscarRemuneracoes(PDDocument documento) throws IOException {
+    
+    //está funcional, contudo, acredito que é mais seguro colocar a análise por áreas, assim seria possível dar maior segurança em relção aos indicadores.
+    
+    public void organizarRemuneracoes(String remuneracoes) {
 
-        PDFTextStripper tStripper = new PDFTextStripper();
-        tStripper.setSortByPosition(true);
+        List<String> competencias = new ArrayList<>();
+        List<String> contribuicoes = new ArrayList<>();
+        String linhas[] = remuneracoes.split("\r\n");
 
-        String textoEmLinhas[] = tStripper.getText(documento).split("\r\n");
-
-        Boolean competencia = false;
-
-        for (String linha : textoEmLinhas) {
-
+        for (String linha : linhas) {
             if (!linha.isBlank()) {
+                List<String> dados = Arrays.asList(linha.split(" "));
 
-                if (linha.contains("Seq.") || linha.contains("O INSS poderá")) {
-                    competencia = false;
-//                System.out.println("");
+                for (String dado : dados) {
+                   
+                    if(dado.contains("/")) {
+                       competencias.add(dado);
+                        System.out.print("Competência: " + dado);
+                    }
+                    else{
+                        contribuicoes.add(dado);
+                        System.out.println(" Valor: " + dado);
+                    }
                 }
-                if (competencia) {
-                    System.out.println(linha);
+ {
+                    
+                    
+                    
+                    
                 }
-                if (linha.contains("Competência")) {
-                    competencia = true;
+ {
+                    
+                    
+
                 }
 
             }
 
         }
-
     }
+
+//    Arquivo para eventual necessidade (deverá ser excluído ao final do projeto).
+//    public void buscarRemuneracoes(PDDocument documento) throws IOException {
+//
+//        PDFTextStripper tStripper = new PDFTextStripper();
+//        tStripper.setSortByPosition(true);
+//
+//        String textoEmLinhas[] = tStripper.getText(documento).split("\r\n");
+//
+//        Boolean competencia = false;
+//
+//        for (String linha : textoEmLinhas) {
+//
+//            if (!linha.isBlank()) {
+//
+//                if (linha.contains("Seq.") || linha.contains("O INSS poderá")) {
+//                    competencia = false;
+//                }
+//                if (competencia) {
+//                    System.out.println(linha);
+//                }
+//                if (linha.contains("Competência")) {
+//                    competencia = true;
+//                }
+//
+//            }
+//
+//        }
+//
+//    }
 }
 
 //Arquivo para eventual necessidade de correção do local dos campos.
