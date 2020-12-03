@@ -27,7 +27,7 @@ public class OrganizaTextoNaArea {
     List<Double> eixoY = new ArrayList<>();
 
     private int largura = 100;
-    private int altura = 5;
+    private int altura = 10;
 
     private int numeroDaPagina;
 
@@ -58,7 +58,7 @@ public class OrganizaTextoNaArea {
 
         buscarInformacoesPessoais(stripper, pagina);
 
-        buscarVinculos(stripper, documento);
+        buscarVinculos(stripper, pagina);
 //        buscarRemuneracoes(documento);
 
     }
@@ -105,7 +105,7 @@ public class OrganizaTextoNaArea {
         //Nome da mãe
         palavra = "Nome da mãe:";
         stripper.addRegion("Nome da mae", new Rectangle(
-                388,
+                430,
                 136,
                 200,
                 altura
@@ -124,13 +124,7 @@ public class OrganizaTextoNaArea {
 
     }
 
-    public void buscarVinculos(PDFTextStripperByArea stripper, PDDocument documento) throws IOException {
-
-        PDPage pagina = documento.getPage(numeroDaPagina);
-        PDFTextStripper tStripper = new PDFTextStripper();
-        tStripper.setSortByPosition(true);
-
-        String textoEmLinhas[] = tStripper.getText(documento).split("\r\n");
+    public void buscarVinculos(PDFTextStripperByArea stripper, PDPage pagina) throws IOException {
 
         //localizar linha da Seq.
         int i = 1;
@@ -143,8 +137,21 @@ public class OrganizaTextoNaArea {
 
             int inicioDasRemuneracoes = linhaRem;
             int fimDasRemuneracoes;
+
+            //verificar se tem remunerações
+            int linhaDeVerificacao = eixoY.get(letras.indexOf("Remunerações", i)).intValue();
+
+            stripper.addRegion("Remuneracoes", new Rectangle(
+                    50,
+                    linhaDeVerificacao,
+                    100,
+                    altura
+            ));
+
+            //--------------------------------------
             if (letras.indexOf("Seq", indexDaRemuneracao) > 0) {
                 fimDasRemuneracoes = eixoY.get(letras.indexOf("Seq", indexDaRemuneracao)).intValue();
+
             } else {
                 fimDasRemuneracoes = eixoY.get(letras.indexOf("O INSS", indexDaRemuneracao)).intValue();
             }
@@ -207,6 +214,23 @@ public class OrganizaTextoNaArea {
                     100,
                     altura
             ));
+            
+            //Últ. Remun.
+            stripper.addRegion("Ult_Remun", new Rectangle(
+                    666,
+                    linha,
+                    50,
+                    altura
+            ));
+            
+            //Indicadores.
+            stripper.addRegion("Indicadores", new Rectangle(
+                    680,
+                    linha,
+                    100,
+                    altura
+            ));
+            
 
             //Remunecarao
             stripper.addRegion("Remuneracao", new Rectangle(
@@ -226,12 +250,21 @@ public class OrganizaTextoNaArea {
                     + "Data Início: " + stripper.getTextForRegion("Data_Inicio")
                     + "Data Fim: " + stripper.getTextForRegion("Data_Fim")
                     + "Tipo Filiado no Vínculo: " + stripper.getTextForRegion("Tipo_Filiado_no_Vinculo")
-                    + "-----------------------------------------------------------------------------\n"
-                    + "----| Remunerações:"
-            //                        + stripper.getTextForRegion("Remuneracao")
+                    + "Ult. Remun.: " + stripper.getTextForRegion("Ult_Remun")
+                    + "Indicadores: " + stripper.getTextForRegion("Indicadores")
+                    
+                    + "-----------------------------------------------------------------------------"
+            //                    + "----| Remunerações:"
+            //                    + stripper.getTextForRegion("Remuneracao")
+
             );
 
-            organizarRemuneracoes(stripper.getTextForRegion("Remuneracao"));
+            if (stripper.getTextForRegion("Remuneracoes").contains("Remunerações")) {
+//                System.out.println("Nessa linha tem remuneração");
+                organizarRemuneracoes(stripper.getTextForRegion("Remuneracao"));
+            } else {
+                System.out.println("O vínculo não possui remunerações\n-----------------------------------------------------------------------------\n");
+            }
 
             i += letras.indexOf("Remunerações");
 
@@ -239,9 +272,7 @@ public class OrganizaTextoNaArea {
 
     }
 
-    
     //está funcional, contudo, acredito que é mais seguro colocar a análise por áreas, assim seria possível dar maior segurança em relção aos indicadores.
-    
     public void organizarRemuneracoes(String remuneracoes) {
 
         List<String> competencias = new ArrayList<>();
@@ -253,31 +284,27 @@ public class OrganizaTextoNaArea {
                 List<String> dados = Arrays.asList(linha.split(" "));
 
                 for (String dado : dados) {
-                   
-                    if(dado.contains("/")) {
-                       competencias.add(dado);
+
+                    if (dado.contains("/")) {
+                        competencias.add(dado);
                         System.out.print("Competência: " + dado);
-                    }
-                    else{
+                    } else {
                         contribuicoes.add(dado);
                         System.out.println(" Valor: " + dado);
                     }
                 }
- {
-                    
-                    
-                    
-                    
+                {
+
                 }
- {
-                    
-                    
+                {
 
                 }
 
             }
 
         }
+        
+        System.out.println("-----------------------------------------------------------------------------\n");
     }
 
 //    Arquivo para eventual necessidade (deverá ser excluído ao final do projeto).
